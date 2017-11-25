@@ -1,0 +1,1 @@
+include (../ReaderMode.pro)
