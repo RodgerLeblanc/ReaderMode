@@ -19,6 +19,10 @@ void Reader::read(QString url) {
     request.setRawHeader("Content-Type", "application/json");
     request.setRawHeader("x-api-key", apiKey);
 
+    QSslConfiguration configuration = request.sslConfiguration();
+    configuration.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(configuration);
+
     QNetworkAccessManager* nam = new QNetworkAccessManager(this);
     QNetworkReply* reply = nam->get(request);
     connect(reply, SIGNAL(finished()), this, SLOT(onReadReply()));
@@ -36,14 +40,16 @@ void Reader::onReadReply() {
                 if (map.contains("content"))
                     emit this->htmlReady(map["content"].toString());
                 else
-                    emit error(tr("No content could be retrieved."));
+                    emit this->error(tr("No content could be retrieved."));
             }
             else {
                 emit this->error(tr("Empty response from server."));
             }
         } // end of : if (reply->error() == QNetworkReply::NoError)
         else {
-            emit this->error(reply->errorString());
+            emit this->error(QString("Error #%1: %2")
+                    .arg((int)reply->error())
+                    .arg(reply->errorString()));
         }
     }  // end of : if (reply)
     else {
